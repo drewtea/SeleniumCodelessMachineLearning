@@ -1,0 +1,99 @@
+# Web Scraping
+- inspect the structure of the website, Understanding the HTML structure of a single page,
+All the pages we want to scrape have the same overall structure. This implies that they
+ also have the same overall HTML structure. So, to write our script,
+ -we need to figure out what distinguishes them from other div elements on that page
+ it will suffice to understand the HTML structure of only one page.
+- query the website using requests and return its HTML content.
+- next step is to use BeautifulSoup library to go through the HTML, parse html content and extract
+
+# keyword
+form class, action
+div class
+table
+span
+role = combobox
+placeholder, name : main atribute to locate search box
+driver.find_element_by_xpath("//input[@placeholder='Tìm bài viết, sản phẩm, nhóm…']")
+
+
+# filter:  log in form:
+exclude email, e-mail, login, password
+style="display:none"
+type hidden
+checkbox
+
+## error
+13 qq.com  
+38 amazonaws.com
+35 sina.com.cn
+107 tribunnews.com
+
+
+
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='www.amazon.com', port=443): Max retries exceeded with url: / (Caused 
+by NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x00000112F60B2080>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed',))
+
+
+site with pop up choosen region, city, location (ameli.fr)
+
+## Test website
+pap.fr
+https://www.nytimes.com/  # button atribute only
+ameli.fr     # pop up 
+https://www.biblio.com   ## multiple search forms
+legacy.com   # pattern search form
+tasty.co
+time.com
+mlb.com   ==> very strange behaviour
+
+#### Robot framwork advantage compared to selenium 
+-  requires less technical skill than programming language-based frameworks
+-  write test suit with a high level of abstraction, test suit built upon "reuseable keyword"
+-  provide test runner
+- provide nice test report, log
+- flexibility, provides an abstraction layer on top of the physical implementation 
+of the system under test, it is  possible to write tests that work cross-platform
+ (ie: the same test case could be used to test both an android and iOS app, or for 
+ testing a web app that runs on chrome, firefox and safari).
+ - extensibility: can plug in a library to use selenium to drive a browser.
+  You can plug in a database library to directly access databases. 
+
+# Problem statement - Challenges of Dynamic Web Element
+- web html are keep changing dynamically in both structure and attribute value
+- massive amount of html structures, not easy to find the similar pattern
+- hidden search form ( www.news.zing.vn) https://www.nytimes.com/
+- many input boxes: login, search...
+- irregular tags
+- Advanced Search - limited search filters should be provided
+
+  # Idea #
+- Reusing generic test cases by leveraging machine learning technique on element locator
+- The locator can adapt dynamically to the changes -> test cases dont break
+- perform data-driven testing by creating a separate test case for each line of data in a text file?
+- weight attribute according to the frequency and informative ranking of <input/> tag:
+    name > id > role > placeholder > class > title > accesskey
+- Building features vector:
+  + pattern/DOM structure: true/false for each attribute
+  + frequency: how many attributes appear in pattern
+  + informative weight: defined by AI algorithm or user manual
+  + hidden search bar: true/false
+
+# Scenario for tescase
+- Users must be able to load full website and navigate the search box, if website is not loaded -> fail
+- If website does not contain a search box or does not have the search functionality in their services -->
+error!!  
+- Users enter "search term" -> Search term must be appeared in the search box, if not appear -> fail
+- Search box must accept any type of query as string for input (number, text, special characters...).
+- If there is condition/limit/boundary/criteria for input search -> not consider in our test case -> error. 
+For example: pap.fr only allows user to select the special search keys in their pattern database 
+(region, type of house, size of house, prize,...)
+- If a website requires more than a step rather than type search term -> error
+- Website must return the result for the search term ->"no result found or nothing found" is still consider 
+as a pass case
+- Extension for the website which has search box as hidden????
+
+Test scripts:
+  + find by id/name/class
+  + find by xpath 
+  + find by css
