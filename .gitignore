@@ -1,3 +1,23 @@
-# ignore a single file
-geckodriver.exe
-geckodriver.log
+/data
+/robotFramework
+/reports
+/backup
+/results
+/library
+/.vscode
+/scraping
+/.codelessEnv
+/TestResults___main__.GoogleSearch_2019-10-02_14-51-18.html
+/hidden-search-sites.txt
+/test-sites.txt
+/output.txt
+/geckodriver.log
+/output.xml
+/selenium-screenshot-2.png
+/google.robot
+/selenium-screenshot-1.png
+/a.py
+/c2.txt
+/c1.txt
+/tests/geckodriver.exe
+/*.gitignore
