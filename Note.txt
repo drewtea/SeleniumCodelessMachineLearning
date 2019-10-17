@@ -46,6 +46,7 @@ legacy.com   # pattern search form
 tasty.co
 time.com
 mlb.com   ==> very strange behaviour
+https://www.directv.com/
 
 #### Robot framwork advantage compared to selenium 
 -  requires less technical skill than programming language-based frameworks
@@ -97,3 +98,6 @@ Test scripts:
   + find by id/name/class
   + find by xpath 
   + find by css
+
+
+monday 2 and 3

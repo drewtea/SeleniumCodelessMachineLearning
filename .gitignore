@@ -21,3 +21,4 @@
 /c1.txt
 /tests/geckodriver.exe
 /*.gitignore
+/tests/*.log

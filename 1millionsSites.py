@@ -14,28 +14,42 @@ start_time = timer()
 
 # datestamp = str(datetime.now().strftime('%d_%m_%Y_%H_%M_%S'))
 # timestamp = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
-# Define number of urls to process, 
+# Define number of urls to process
 # start line and end line of url file
 start_url = 1
-end_url = 10
+end_url = 100
 number_of_urls = end_url - start_url
+test_output = ['PASS', 'FAIL', 'ERROR']
 
 
 # Path to url file
 url_file = Path("data") / "https-sites.txt"
 # Path to output file
-csv_file = str(start_url)+ '_' + str(end_url) + '_urldata' + '.txt'
-# csv_file = str(start_url)+ '_' + str(end_url) + '_urldata' + '.txt'
+csv_file = str(start_url)+ '_' + str(end_url) + '_urldata' + '.csv'
+# txt_file = str(start_url)+ '_' + str(end_url) + '_urldata' + '.txt'
 output_file = Path("data") / csv_file
 
 # Path to report file
 report_file = Path("reports") / "report.txt"
+# Path to report file
+result_file = Path("results") / "verdict.txt"
 
+def verdicts(domain,test_output):
+    verdict = []      
+    verdict.append(test_output)
+    websites=[]
+    websites.append(domain)
+    with open(result_file, 'a', encoding='utf-8', newline='') as f:
+        writer = csv.writer(f)
+        for i in zip(websites, verdict):
+            writer.writerow(i)
 
-# data =[]
-# review=[]
+''' 
 
-# ==== Scrape search field content  =====
+Module to scrape the search element of website
+# ==== Scrape search field content of html DOM  =====
+
+'''
 def scrape(url):
    
     """Scrape scheduled link previews."""
@@ -78,57 +92,52 @@ def scrape(url):
     #     raw_data.append(e)
     # print(raw_data)
     if not soup.find_all("input"):
-        raw_data.append('NO DATA')
+        # raw_data.append('NO DATA')
+        verdicts(domain,test_output[2])
     else:
-        d=str(raw_data)
-        u={k:v.strip('"') for k,v in re.findall(r'(\S+)=(".*?"|\S+)', d)}
-    websites=[]
-    websites.append(url)
-    print(u)
+        raw_data
+        # convert raw data to string format
+        # data_s=str(raw_data)
+        # # convert raw data to dictionary 
+        # data_dict={k:v.strip('"') for k,v in re.findall(r'(\S+)=(".*?"|\S+)', data_s)}
 
-    
-        #convert to dictionary
-        
+    # Array to store url link
+    websites=[]
+    websites.append(domain)       
 
     # Write direct to text format
-    with open(output_file, 'a', encoding='utf-8') as f:
-        print(websites, u, file=f)
+    # with open(output_file, 'a', encoding='utf-8') as f:
+    #     print(websites, raw_data, file=f)
 
     # Write to cvs format
-    # with open(output_file, 'a', encoding='utf-8', newline='') as f:
-    #     writer = csv.writer(f)
-    #     for i in zip(websites, u):
-    #         writer.writerow(i)
+    with open(output_file, 'a', encoding='utf-8', newline='') as f:
+        writer = csv.writer(f)
+        for i in zip(websites, raw_data):
+         writer.writerow(i)
+
    
 ''' 
 
 Open data file to read the list of urls
-then use scrape module to retrieve the data
+then using the scrape module to retrieve the data
 
 '''
 with open(url_file, 'r') as input_file:
-#     # Skip first line
-#     next(input_file)
+
     # Read line with specific number of urls
-    lines_cache = islice(input_file, start_url, end_url)   
-# lines_cache = linecache.getlines('test-sites.txt')[start_url:end_url]
+    lines_cache = islice(input_file, start_url, end_url+1)   
     # Read line by line and append 'https://'
     for current_line in lines_cache:
-        url="https://"+ current_line.split()[1]
+        domain = current_line.split()[1]
+        url="https://"+ domain
         try:
-            s = scrape(url)
+            scrape(url)
+        # Add exception when connecting to url is failed
         except Exception as e:   
-            websites=[]   
-            error = []      
-            websites.append(url)
-            error.append('ERROR')
-            with open(output_file, 'a', encoding='utf-8', newline='') as f:
-                writer = csv.writer(f)
-                for i in zip(websites, error):
-                    writer.writerow(i)
-# Print to report
+            verdicts(domain,test_output[2])
+# End time running
 end_time = timer()
-# excuted_time = end_time - start_time
+# Excuted time running
 excuted_time = str(timedelta(seconds=(end_time - start_time)))
 with open(report_file, 'a', encoding='utf-8') as f:
     print('%s was scraped from %d websites in:'%(csv_file, number_of_urls), excuted_time, file=f)

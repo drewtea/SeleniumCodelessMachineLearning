@@ -10,10 +10,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 
 log_dir = Path.cwd().parents[1]/ 'reports' / 'logs'
+report_dir = Path.cwd().parents[1]/ 'reports' 
 
-class GoogleSearch(unittest.TestCase):
+class Search(unittest.TestCase):
     # declare variable to store the URL to be visited
-    base_url="ttps://www.nytimes.com"
+    base_url="https://twitter.com/"
     
     # --- Pre - Condition ---
     # declare variable to store search term
@@ -22,9 +23,9 @@ class GoogleSearch(unittest.TestCase):
     
     def setUp(self):
         # declare and initialize driver variable
-        profile = webdriver.FirefoxProfile('C:\\Users\\Phuc\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles\\3932hiqc.default')
-        profile.set_preference("webdriver.log.file",log_dir)
-        self.driver=webdriver.Firefox(profile)
+        # profile = webdriver.FirefoxProfile('C:\\Users\\Phuc\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles\\3932hiqc.default')
+        # profile.set_preference("webdriver.log.file",log_dir)
+        self.driver=webdriver.Firefox()
        
         # browser should be loaded in maximized window
         self.driver.maximize_window()
@@ -41,7 +42,7 @@ class GoogleSearch(unittest.TestCase):
         self.driver.get(self.base_url) 
         
         # to enter search term, we need to locate the search textbox
-        search_term=self.driver.find_element_by_class_name('p-player-search__input p-player-search__input--md')
+        search_term=self.driver.find_element_by_class_name('GeoSearch-queryInput')
 
         # to clear any text in the search textbox
         search_term.clear()
@@ -53,4 +54,4 @@ class GoogleSearch(unittest.TestCase):
         search_term.send_keys(Keys.RETURN) 
         
 if __name__ == '__main__':
-    unittest.main(testRunner=HtmlTestRunner.HTMLTestRunner(output="D:\CCN\Intership_TSP\CodelessML\reports"))
+    unittest.main(testRunner=HtmlTestRunner.HTMLTestRunner(output=report_dir))
