@@ -21,4 +21,11 @@
 /c1.txt
 /tests/geckodriver.exe
 /*.gitignore
-/tests/*.log
+/*.log
+/*.exe
+/*.html
+/*.pyc
+*.pyc
+*/*/*/__pycache__/
+*/*/__pycache__/
+*/__pycache__/

@@ -101,3 +101,11 @@ Test scripts:
 
 
 monday 2 and 3
+
+5
+
+The page is rendered with JavaScript making more requests to fetch additional data.
+ You can fetch the complete page with selenium.
+
+ # Chrome vs Firefox
+ for Scraping chrome perform better

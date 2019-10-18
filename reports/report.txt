@@ -27,3 +27,14 @@
 1_10_urldata.csv was scraped from 9 websites in: 0:00:10.746596
 1_10_urldata.csv was scraped from 9 websites in: 0:00:11.995044
 1_100_urldata.csv was scraped from 99 websites in: 0:02:49.532365
+1_1000_urldata.csv was scraped from 999 websites in: 1:10:03.958990
+1_11_urldata.csv was scraped from 10 websites in: 0:01:11.000227
+0_16_urldata.csv was scraped from 16 websites in: 0:02:09.768603
+0_20_urldata.csv was scraped from 20 websites in: 0:02:55.053681
+0_4_urldata.csv was scraped from 4 websites in: 0:00:26.470109
+0_4_urldata.csv was scraped from 4 websites in: 0:00:01.859699
+0_4_urldata.csv was scraped from 4 websites in: 0:00:02.887830
+0_4_urldata.csv was scraped from 4 websites in: 0:00:25.838400
+0_4_urldata.csv was scraped from 4 websites in: 0:00:02.205925
+0_4_urldata.csv was scraped from 4 websites in: 0:00:02.556214
+0_4_urldata.csv was scraped from 4 websites in: 0:00:32.384683

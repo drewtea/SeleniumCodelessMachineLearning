@@ -3,6 +3,7 @@ from time import sleep
 import requests
 import re
 from bs4 import BeautifulSoup
+from selenium import webdriver
 from itertools import islice
 import csv
 import linecache
@@ -16,14 +17,14 @@ start_time = timer()
 # timestamp = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 # Define number of urls to process
 # start line and end line of url file
-start_url = 1
-end_url = 100
+start_url = 0
+end_url = 4
 number_of_urls = end_url - start_url
 test_output = ['PASS', 'FAIL', 'ERROR']
 
 
 # Path to url file
-url_file = Path("data") / "https-sites.txt"
+url_file = Path("data") / "test_sites.txt"
 # Path to output file
 csv_file = str(start_url)+ '_' + str(end_url) + '_urldata' + '.csv'
 # txt_file = str(start_url)+ '_' + str(end_url) + '_urldata' + '.txt'
@@ -32,9 +33,10 @@ output_file = Path("data") / csv_file
 # Path to report file
 report_file = Path("reports") / "report.txt"
 # Path to report file
-result_file = Path("results") / "verdict.txt"
+result_file = Path("results") / "verdict1.txt"
 
 def verdicts(domain,test_output):
+    # Write the verdict after testing to file
     verdict = []      
     verdict.append(test_output)
     websites=[]
@@ -44,10 +46,35 @@ def verdicts(domain,test_output):
         for i in zip(websites, verdict):
             writer.writerow(i)
 
+def filter_elemment(soup):
+    # Funtion to filter the element
+    # Exclude login form, email form...
+    for hidden in soup.findAll("input", {'style':'display:none'}): 
+        hidden.decompose()
+    # Remove none-display attribute
+    for none_display in soup.findAll("input",attrs=({"type":{"password","submit","radio","hidden", "checkbox","range","number"}})):
+        none_display.decompose()
+
+    for h in soup.find_all("input", {'hidden':'hidden'}): 
+        h.decompose()
+    # Regex pattern
+    # Remove login attribute by regex pattern
+    removePattern=re.compile(r"(user|login|username|name|password|email|mobile|hidden|submit|genre)")
+    # login = soup.findAll("input")
+
+    for id_login in soup.find_all("input", attrs={'class':re.compile(removePattern)}):
+        id_login.decompose()
+    for id_login in soup.find_all("input", attrs={'id':re.compile(removePattern)}):
+        id_login.decompose()
+    for name_login in soup.find_all("input", attrs={'name':re.compile(removePattern)}):
+        name_login.decompose()
+    for name_login in soup.find_all("input", attrs={'aria-label':re.compile(removePattern)}):
+        name_login.decompose()
+
 ''' 
 
 Module to scrape the search element of website
-# ==== Scrape search field content of html DOM  =====
+=== Scrape search field content of html DOM  ===
 
 '''
 def scrape(url):
@@ -63,37 +90,25 @@ def scrape(url):
     page.close()
     soup = BeautifulSoup(response, "lxml")
     # sleep(1)
-    for hidden in soup.findAll("input", {'style':'display:none'}): 
-        hidden.decompose()
-    # Remove none-display attribute
-    for none_display in soup.findAll("input",attrs=({"type":{"password","submit","radio","hidden", "checkbox"}})):
-        none_display.decompose()
-
-    for h in soup.find_all("input", {'hidden':'hidden'}): 
-        h.decompose()
-    # Regex pattern
-    # Remove login attribute by regex pattern
-    removePattern=re.compile("(user|login|username|name|password|email)")
-    # login = soup.findAll("input")
-
-    for id_login in soup.find_all("input", attrs={'class':re.compile(removePattern)}):
-        id_login.decompose()
-    for id_login in soup.find_all("input", attrs={'id':re.compile(removePattern)}):
-        id_login.decompose()
-    for name_login in soup.find_all("input", attrs={'name':re.compile(removePattern)}):
-        name_login.decompose()
-
-
-    # ###  Print the result after filter
-    # Define list of urls after preprocess
+    # filter element
+    filter_elemment(soup)
+    # Scrape raw data after filter
     raw_data = soup.findAll("input")
-    # Print exception if the connection is failed
-    # if Exception ==True:
-    #     raw_data.append(e)
-    # print(raw_data)
     if not soup.find_all("input"):
-        # raw_data.append('NO DATA')
-        verdicts(domain,test_output[2])
+        # if the webpage is rendered with JavaScript making more requests to fetch additional data.
+        # this case will be using Selenium to scrape the whole source page
+        driver = webdriver.Chrome()
+        driver.get(url)
+        soup = BeautifulSoup(driver.page_source, 'lxml')
+        driver.quit()
+        # filter element 
+        filter_elemment(soup)
+        # scrape raw data after filter
+        raw_data = soup.findAll("input")
+        if not raw_data:
+            # if can not scrape the data
+            # write verdict = 'ERROR' 
+            verdicts(domain,test_output[2])
     else:
         raw_data
         # convert raw data to string format
@@ -101,7 +116,7 @@ def scrape(url):
         # # convert raw data to dictionary 
         # data_dict={k:v.strip('"') for k,v in re.findall(r'(\S+)=(".*?"|\S+)', data_s)}
 
-    # Array to store url link
+    # List to store url link
     websites=[]
     websites.append(domain)       
 
@@ -119,11 +134,10 @@ def scrape(url):
 ''' 
 
 Open data file to read the list of urls
-then using the scrape module to retrieve the data
+then using the scrape module to scrape the data
 
 '''
 with open(url_file, 'r') as input_file:
-
     # Read line with specific number of urls
     lines_cache = islice(input_file, start_url, end_url+1)   
     # Read line by line and append 'https://'
@@ -135,9 +149,11 @@ with open(url_file, 'r') as input_file:
         # Add exception when connecting to url is failed
         except Exception as e:   
             verdicts(domain,test_output[2])
+
 # End time running
 end_time = timer()
 # Excuted time running
 excuted_time = str(timedelta(seconds=(end_time - start_time)))
+# Write runing time to report
 with open(report_file, 'a', encoding='utf-8') as f:
     print('%s was scraped from %d websites in:'%(csv_file, number_of_urls), excuted_time, file=f)
