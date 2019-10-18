@@ -51,7 +51,7 @@ def verdicts(domain,test_output):
         for i in zip(websites, verdict):
             writer.writerow(i)
 
-def filter_element(soup):
+def filter_attribute(soup):
     # Funtion to filter the element
     # Regex pattern for style
     removeStyle = re.compile(r"display|color|colour|none", re.IGNORECASE)
@@ -78,6 +78,15 @@ def filter_element(soup):
     for placeholder_login in soup.find_all("input", attrs={'placeholder':removePattern}):
         placeholder_login.decompose()
 
+def filter_element(raw_data):
+    # filter when data has more than one input element
+    if len(raw_data)>1:
+        for r in raw_data:
+            if (r.has_attr('autocomplete') or r.has_attr('autocapitalize') 
+                    or r.has_attr('spellcheck') or r.has_attr('aria-autocomplete')
+                    or r.has_attr('autofocus')):
+                raw_data=r
+    return raw_data
 ''' 
 
 Module to scrape the search element of website
@@ -98,7 +107,7 @@ def scrape(url):
     soup = BeautifulSoup(response, "lxml")
     # sleep(1)
     # filter element
-    filter_element(soup)
+    filter_attribute(soup)
     # Scrape raw data after filter
     raw_data = soup.findAll("input")
     if not soup.find_all("input"):
@@ -106,24 +115,25 @@ def scrape(url):
         # this case will be using Selenium to scrape the whole source page
         driver = webdriver.Chrome()
         driver.get(url)
-        driver.implicitly_wait(10)
-        soup = BeautifulSoup(driver.page_source, 'lxml')
-        # Wait for page to load fully
+        # driver.implicitly_wait(10)
+        # Wait for page to load full
         timeout = 5
         try:
             element_present = EC.presence_of_element_located((By.XPATH, '//input'))
             WebDriverWait(driver, timeout).until(element_present)
         except TimeoutException:
             print("Timed out waiting for page to load")
+        soup = BeautifulSoup(driver.page_source, 'lxml')        
         driver.quit()
-        # filter element 
-        filter_element(soup)
+        # filter attribute
+        filter_attribute(soup)
         # scrape raw data after filter
         raw_data = soup.findAll("input")
         if not raw_data:
             # if not possible to scrape the data
             # write verdict = 'ERROR' 
             verdicts(domain,test_output[2])
+        
     else:
         raw_data
         # convert raw data to string format
@@ -133,7 +143,8 @@ def scrape(url):
 
     # List to store url link
     websites=[]
-    websites.append(domain)       
+    websites.append(domain)
+    a = filter_element (raw_data)       
 
     # Write direct to text format
     # with open(output_file, 'a', encoding='utf-8') as f:
@@ -142,7 +153,7 @@ def scrape(url):
     # Write to cvs format
     with open(output_file, 'a', encoding='utf-8', newline='') as f:
         writer = csv.writer(f)
-        for i in zip(websites, raw_data):
+        for i in zip(websites, a):
          writer.writerow(i)
 
    

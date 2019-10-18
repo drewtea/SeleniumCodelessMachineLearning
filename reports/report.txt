@@ -48,3 +48,9 @@
 0_7_urldata.csv was scraped from 7 websites in: 0:00:35.389840
 0_7_urldata.csv was scraped from 7 websites in: 0:00:37.144250
 0_7_urldata.csv was scraped from 7 websites in: 0:00:35.887347
+0_7_urldata.csv was scraped from 7 websites in: 0:00:37.274520
+0_7_urldata.csv was scraped from 7 websites in: 0:00:35.556583
+0_7_urldata.csv was scraped from 7 websites in: 0:00:36.457551
+0_7_urldata.csv was scraped from 7 websites in: 0:00:41.280483
+0_7_urldata.csv was scraped from 7 websites in: 0:00:33.854354
+0_7_urldata.csv was scraped from 7 websites in: 0:00:35.804334
