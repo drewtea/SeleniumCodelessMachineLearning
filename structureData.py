@@ -10,7 +10,7 @@ import numpy as np
 # end_url = 1001
 
 # Path to raw data
-raw_file = Path("data") / "1_100_urldata.csv"
+raw_file = Path("data") / "0_10_urldata.csv"
 # Path to dataframe file after cleaning
 df_file = Path("data") / "df.csv"
 
@@ -34,7 +34,7 @@ with open(raw_file, 'r', encoding='utf-8') as rf, open(df_file, 'a', encoding='u
         clean_data.append(d2)
     # convert to dataframe
     df = pd.DataFrame(clean_data)
-    # print(df)
+    print(df)
     # df.replace('N/A',np.NaN)
 
     # write clean data to file  

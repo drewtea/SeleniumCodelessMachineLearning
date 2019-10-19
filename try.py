@@ -19,7 +19,7 @@ import pandas as pd
 
 output_file = Path("data") / 'try.txt'
 
-url = 'https://www.dailymotion.com'
+url = 'https://www.pornhub.com'
 session = requests.Session()
 adapter = requests.adapters.HTTPAdapter(max_retries=2)
 session.mount('https://', adapter)
@@ -31,7 +31,15 @@ page = session.get(url, headers=headers, timeout=2)
 response = page.text
 # page.close()
 soup = BeautifulSoup(response, "html.parser")
-# /html//div[@id='root']//div[@class='App-container']/div[1]/div[2]//form[@class='Searchbar-form']/input
+raw_data = soup.findAll("input")
+
+if len(raw_data)>1:
+    for r in raw_data:
+        if (r.has_attr('autocomplete') or r.has_attr('autocapitalize') 
+                or r.has_attr('spellcheck') or r.has_attr('aria-autocomplete')
+                or r.has_attr('autofocus')):
+            raw_data=r
+            print(raw_data)
 
 
 

@@ -40,10 +40,12 @@ def filter_element(raw_data):
                     or r.has_attr('spellcheck') or r.has_attr('aria-autocomplete')
                     or r.has_attr('autofocus')):
                 raw_data=r
-    return raw_data
+                a=[]
+                a.append(raw_data)
+    return a
 
 driver = webdriver.Chrome()
-url = "https://www.pornhub.com"
+url = "https://www.google.com"
 driver.get(url)
 timeout = 2
 try:
@@ -60,8 +62,13 @@ filter_attribute(soup)
 raw_data = soup.findAll("input")
 if not raw_data:
     print('Error')
-a= filter_element(raw_data)
-print(a)
+if len(raw_data)>1:
+        for r in raw_data:
+            if (r.has_attr('autocomplete') or r.has_attr('autocapitalize') 
+                    or r.has_attr('spellcheck') or r.has_attr('aria-autocomplete')
+                    or r.has_attr('autofocus')):
+                raw_data=r
+print(raw_data)
 
 
 

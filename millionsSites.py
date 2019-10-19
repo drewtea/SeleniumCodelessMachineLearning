@@ -23,7 +23,7 @@ start_time = timer()
 # Define number of urls to process
 # start line and end line of url file
 start_url = 0
-end_url = 7
+end_url = 10
 number_of_urls = end_url - start_url
 test_output = ['PASS', 'FAIL', 'ERROR']
 
@@ -78,15 +78,6 @@ def filter_attribute(soup):
     for placeholder_login in soup.find_all("input", attrs={'placeholder':removePattern}):
         placeholder_login.decompose()
 
-def filter_element(raw_data):
-    # filter when data has more than one input element
-    if len(raw_data)>1:
-        for r in raw_data:
-            if (r.has_attr('autocomplete') or r.has_attr('autocapitalize') 
-                    or r.has_attr('spellcheck') or r.has_attr('aria-autocomplete')
-                    or r.has_attr('autofocus')):
-                raw_data=r
-    return raw_data
 ''' 
 
 Module to scrape the search element of website
@@ -132,19 +123,30 @@ def scrape(url):
         if not raw_data:
             # if not possible to scrape the data
             # write verdict = 'ERROR' 
-            verdicts(domain,test_output[2])
-        
+            verdicts(domain,test_output[2])        
     else:
-        raw_data
+        raw_data      
+         
+        
         # convert raw data to string format
         # data_s=str(raw_data)
         # # convert raw data to dictionary 
         # data_dict={k:v.strip('"') for k,v in re.findall(r'(\S+)=(".*?"|\S+)', data_s)}
 
-    # List to store url link
+    # If list has more than one element
+    # filter again
+    if len(raw_data)>1:
+        for r in raw_data:
+            if (r.has_attr('autocomplete') or r.has_attr('autocapitalize') 
+                    or r.has_attr('spellcheck') or r.has_attr('aria-autocomplete')
+                    or r.has_attr('autofocus') or r.has_attr('placeholder') ):
+                raw_data=r
+                a=[]
+                a.append(r)
+                raw_data=a
+    # list to store url sites
     websites=[]
     websites.append(domain)
-    a = filter_element (raw_data)       
 
     # Write direct to text format
     # with open(output_file, 'a', encoding='utf-8') as f:
@@ -153,9 +155,8 @@ def scrape(url):
     # Write to cvs format
     with open(output_file, 'a', encoding='utf-8', newline='') as f:
         writer = csv.writer(f)
-        for i in zip(websites, a):
+        for i in zip(websites, raw_data):
          writer.writerow(i)
-
    
 ''' 
 
