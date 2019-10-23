@@ -31,3 +31,6 @@
 */__pycache__/
 /results/verdict.txt
 /reports/report.txt
+/*.ipynb
+/__pycache__
+/.ipynb_checkpoints

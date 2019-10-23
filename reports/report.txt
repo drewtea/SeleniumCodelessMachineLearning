@@ -92,3 +92,11 @@
 0_2_urldata.csv was scraped from 2 websites in: 0:00:01.109335
 0_2_urldata.csv was scraped from 2 websites in: 0:00:00.965506
 0_10_urldata.csv was scraped from 10 websites in: 0:00:47.999867
+0_10_urldata.csv was scraped from 10 websites in: 0:00:55.854382
+0_10_urldata.csv was scraped from 10 websites in: 0:00:57.467007
+0_10_urldata.csv was scraped from 10 websites in: 0:00:55.529554
+0_10_urldata.csv was scraped from 10 websites in: 0:00:52.919060
+0_10_urldata.csv was scraped from 10 websites in: 0:01:02.800742
+0_10_urldata.csv was scraped from 10 websites in: 0:00:06.657090
+0_10_urldata.csv was scraped from 10 websites in: 0:01:12.934967
+0_7_urldata.csv was scraped from 7 websites in: 0:00:42.337929

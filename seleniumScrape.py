@@ -1,76 +1,94 @@
 from bs4 import BeautifulSoup
 from selenium import webdriver
 import re
+import requests
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from pathlib import Path
 
-def filter_attribute(soup):
-    # Funtion to filter the element
-    # Regex pattern for style
-    removeStyle = re.compile(r"display|color|colour|none", re.IGNORECASE)
-    for input_style in soup.findAll("input", {'style':removeStyle}): 
-        input_style.decompose()
-    # Remove none-display attribute
-    removeType = re.compile(r"password|submit|radio|hidden|checkbox|range|number|file|phone|button", re.IGNORECASE)
-    for input_type in soup.findAll("input",attrs=({"type":removeType})):
-        input_type.decompose()
+from millionsSites import filter_attribute
 
-    for input_hidden in soup.find_all("input", {'hidden':'hidden'}): 
-        input_hidden.decompose()
-    # Regex pattern for login filter
-    removePattern=re.compile(r"(user|login|username|name|password|e-mail|phone|mobilephone|email|mobile|birthday|age|hidden|submit|genre|gender|vip)",re.IGNORECASE)
-    # Decompose all elements which have login pattern
-    for class_login in soup.find_all("input", attrs={'class':removePattern}):
-        class_login.decompose()
-    for id_login in soup.find_all("input", attrs={'id':removePattern}):
-        id_login.decompose()
-    for name_login in soup.find_all("input", attrs={'name':removePattern}):
-        name_login.decompose()
-    for label_login in soup.find_all("input", attrs={'aria-label':removePattern}):
-        label_login.decompose()
-    for placeholder_login in soup.find_all("input", attrs={'placeholder':removePattern}):
-        placeholder_login.decompose()
+cookie_extention = Path("extention")/ "cookie.crx"
 
-def filter_element(raw_data):
-    if len(raw_data)>1:
-        for r in raw_data:
-            if (r.has_attr('autocomplete') or r.has_attr('autocapitalize') 
-                    or r.has_attr('spellcheck') or r.has_attr('aria-autocomplete')
-                    or r.has_attr('autofocus')):
-                raw_data=r
-                a=[]
-                a.append(raw_data)
-    return a
 
-driver = webdriver.Chrome()
-url = "https://www.google.com"
-driver.get(url)
-timeout = 2
-try:
-    element_present = EC.presence_of_element_located((By.XPATH, '//input'))
-    WebDriverWait(driver, timeout).until(element_present)
-except TimeoutException:
-    print ("Timed out waiting for page to load")
-# driver.maximize_window()
-# driver.implicitly_wait(10)
+url = "https://imgur.com"
 
-soup = BeautifulSoup(driver.page_source, 'lxml')
-driver.quit()
+session = requests.Session()
+adapter = requests.adapters.HTTPAdapter(max_retries=2)
+session.mount('https://', adapter)
+session.mount('http://', adapter)
+headers = {"User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"}
+page = session.get(url, headers=headers, timeout=2)
+response = page.text
+page.close()
+soup = BeautifulSoup(response, "lxml")
+# sleep(1)
+# filter element
 filter_attribute(soup)
+# Scrape raw data after filter
 raw_data = soup.findAll("input")
+
+# raw_data =[]
 if not raw_data:
-    print('Error')
+    # if the webpage is rendered with JavaScript making more requests to fetch additional data.
+    # this case will be using Selenium to scrape the whole source page
+    # adding chrome extension
+    option = webdriver.ChromeOptions()
+    option.add_extension(cookie_extention)
+    driver = webdriver.Chrome(chrome_options=option)
+    driver.get(url)
+    driver.implicitly_wait(10)
+    # Wait for page to load full
+    timeout = 10
+    try:
+        element_present = EC.presence_of_element_located((By.XPATH, '//input'))
+        WebDriverWait(driver, timeout).until(element_present)
+    except TimeoutException:
+        print("Timed out waiting for page to load")
+    soup = BeautifulSoup(driver.page_source, 'lxml')        
+    driver.quit()
+    # filter attribute
+    filter_attribute(soup)
+    # scrape raw data after filter
+    raw_data = soup.findAll("input")
+
+    # convert raw_data to dictionary
+    # raw_data = raw_data.attrs
+    if not raw_data:
+        # if not possible to scrape the data
+        # write verdict = 'ERROR' 
+        print('Error_1')    
+         
+    # convert raw data to string format
+    # data_s=str(raw_data)
+    # # convert raw data to dictionary 
+    # data_dict={k:v.strip('"') for k,v in re.findall(r'(\S+)=(".*?"|\S+)', data_s)}
+
+# If list has more than one element
+# => filter again
+attributes = ['autocomplete', 'autocapitalize', 'aria-autocomplete', 
+              'spellcheck','autofocus']
+print(len(raw_data))
+# for k in raw_data:
+#     print(k)
+
 if len(raw_data)>1:
-        for r in raw_data:
-            if (r.has_attr('autocomplete') or r.has_attr('autocapitalize') 
-                    or r.has_attr('spellcheck') or r.has_attr('aria-autocomplete')
-                    or r.has_attr('autofocus')):
-                raw_data=r
+    for r in raw_data:      
+        check_attr = {k: r.has_attr(k) for k in attributes}
+        if True in check_attr.values():
+            a=[]
+            a.append(r)
+            raw_data=a            
+        else:
+            print('Error_2')
 print(raw_data)
+ 
 
 
 
 
-# print(soup.prettify())
+
+
+
