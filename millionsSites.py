@@ -24,24 +24,24 @@ start_time = timer()
 # Define number of urls to process
 # start line and end line of url file
 start_url = 0
-end_url = 7
+end_url = 2
 number_of_urls = end_url - start_url
 test_output = ['PASS', 'FAIL', 'ERROR']
 
 
 # Path to url file
-url_file = Path("data") / "test-sites.txt"
+URL_FILE = Path("data") / "test-sites.txt"
 # Path to output file
-csv_file = str(start_url)+ '_' + str(end_url) + '_urldata' + '.csv'
+CSV_FILE = str(start_url)+ '_' + str(end_url) + '_urldata' + '.csv'
 # txt_file = str(start_url)+ '_' + str(end_url) + '_urldata' + '.txt'
-output_file = Path("data") / csv_file
+OUTPUT_FILE = Path("data") / CSV_FILE
 # path to chrome extention
-cookie_extention = Path("extention")/ "cookie.crx"
+COOKIE_EXTENTION = Path("extention")/ "cookie.crx"
 
 # Path to report file
-report_file = Path("reports") / "report.txt"
+REPORT_FILE = Path("results") / 'report' / "report.txt"
 # Path to report file
-result_file = Path("results") / "verdict1.txt"
+VERDICT_FILE = Path("results") / "verdict-test-sites.txt"
 
 def verdicts(domain,test_output):
     # Write the verdict after testing to file
@@ -49,7 +49,7 @@ def verdicts(domain,test_output):
     verdict.append(test_output)
     websites=[]
     websites.append(domain)
-    with open(result_file, 'a', encoding='utf-8', newline='') as f:
+    with open(VERDICT_FILE, 'a', encoding='utf-8', newline='') as f:
         writer = csv.writer(f)
         for i in zip(websites, verdict):
             writer.writerow(i)
@@ -116,7 +116,7 @@ def scrape(url):
         # this case will be using Selenium to scrape the whole source page
         # adding chrome extension
         option = webdriver.ChromeOptions()
-        option.add_extension(cookie_extention)
+        option.add_extension(COOKIE_EXTENTION)
         driver = webdriver.Chrome(chrome_options=option)
         driver.get(url)
         driver.implicitly_wait(10)
@@ -163,11 +163,11 @@ def scrape(url):
     websites.append(domain)
 
     # Write direct to text format
-    # with open(output_file, 'a', encoding='utf-8') as f:
+    # with open(OUTPUT_FILE, 'a', encoding='utf-8') as f:
     #     print(websites, raw_data, file=f)
 
     # Write to cvs format
-    with open(output_file, 'a', encoding='utf-8', newline='') as f:
+    with open(OUTPUT_FILE, 'a', encoding='utf-8', newline='') as f:
         writer = csv.writer(f)
         for i in zip(websites, raw_data):
          writer.writerow(i)
@@ -180,7 +180,7 @@ then using the scrape module to scrape the data
 '''
 if __name__ == '__main__':
 
-    with open(url_file, 'r') as input_file:
+    with open(URL_FILE, 'r') as input_file:
         # Read line with specific number of urls
         lines_cache = islice(input_file, start_url, end_url+1)   
         # Read line by line and append 'https://'
@@ -198,5 +198,5 @@ if __name__ == '__main__':
     # Excuted time running
     excuted_time = str(timedelta(seconds=(end_time - start_time)))
     # Write runing time to report
-    with open(report_file, 'a', encoding='utf-8') as f:
-        print('%s was scraped from %d websites in:'%(csv_file, number_of_urls), excuted_time, file=f)
+    with open(REPORT_FILE, 'a', encoding='utf-8') as f:
+        print('%s was scraped from %d websites in:'%(CSV_FILE, number_of_urls), excuted_time, file=f)

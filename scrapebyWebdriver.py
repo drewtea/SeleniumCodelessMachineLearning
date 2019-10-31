@@ -4,6 +4,7 @@ import re
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from itertools import islice
+import requests
 import csv
 import linecache
 from timeit import default_timer as timer
@@ -12,33 +13,49 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException, ElementNotVisibleException
+import os
+from searchTC import LocatorElement
 
-# Start timer to measure execuation time for the report
-start_time = timer()
+# Chose the browser for testing
+# browser = webdriver.Chrome()    # Chrome version: 78.0.3904.70 (Official Build) (64-bit)
+# browser = webdriver.Firefox()   # Firefox verion: 70.0 (64-bit)
+# browser = webdriver.Opera()     # Opera version: 76.0.3809.132
+# browser = webdriver.Ie()        # Internet Explorer version: 11.418.18362
+# browser = webdriver.Edge        # Microsoft Edge version: 44.18362.387.0 build 18362
+
+SEARCH_TERM = "Test Automation with ML/AI"
+ 
+
 
 # datestamp = str(datetime.now().strftime('%d_%m_%Y_%H_%M_%S'))
 # timestamp = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 # Define number of urls to process
 # start line and end line of url file
 start_url = 0
-end_url = 15
+end_url = 4
 number_of_urls = end_url - start_url
 test_output = ['PASS', 'FAIL', 'ERROR']
 
 
 # Path to url file
-url_file = Path("data") / "test-sites.txt"
+URL_FILE = Path("data") / "test-sites.txt"
 # Path to output file
-csv_file = str(start_url)+ '_' + str(end_url) + '_urldata' + '.csv'
+CSV_FILE = str(start_url)+ '_' + str(end_url) + '_urldata' + '.csv'
 # txt_file = str(start_url)+ '_' + str(end_url) + '_urldata' + '.txt'
-output_file = Path("data") / csv_file
+OUTPUT_FILE = Path("data") / CSV_FILE
 # path to chrome extention
-cookie_extention = Path("extention")/ "cookie.crx"
+COOKIE_EXTENTION = Path("extention") / "cookie.crx"
+UBLOCK_EXTENTION = Path("extention") / "ublock.crx"
+# Path to report file
+REPORT_FILE = Path("results") / 'reports'/ "report.txt"
+# Path to report file
+VERDICT_FILE = Path("results") / "verdict_test-sites.txt"
 
-# Path to report file
-report_file = Path("reports") / "report.txt"
-# Path to report file
-result_file = Path("results") / "verdict_test-sites.txt"
+# Start timer to measure execuation time for the report
+start_time = timer()
 
 def verdicts(domain,test_output):
     # Write the verdict after testing to file
@@ -46,7 +63,7 @@ def verdicts(domain,test_output):
     verdict.append(test_output)
     websites=[]
     websites.append(domain)
-    with open(result_file, 'a', encoding='utf-8', newline='') as f:
+    with open(VERDICT_FILE, 'a', encoding='utf-8', newline='') as f:
         writer = csv.writer(f)
         for i in zip(websites, verdict):
             writer.writerow(i)
@@ -91,27 +108,21 @@ Module to scrape the search element of website
 === Scrape search field content of html DOM  ===
 
 '''
-def scrape(url):
-   
+
+
+def scrape(url):   
     """
     Scrape webpage by providing url.
     If the webpage is rendered with JavaScript making more requests to fetch additional data,
     this case will be using Selenium to scrape the whole source page
 
     """
-    # adding chrome extension
     option = webdriver.ChromeOptions()
-    option.add_extension(cookie_extention)
+    option.add_extension(COOKIE_EXTENTION)
+    option.add_extension(UBLOCK_EXTENTION)
     driver = webdriver.Chrome(chrome_options=option)
     driver.get(url)
     driver.implicitly_wait(10)
-    # Wait for page to load full
-    timeout = 5
-    try:
-        element_present = EC.presence_of_element_located((By.XPATH, '//input'))
-        WebDriverWait(driver, timeout).until(element_present)
-    except TimeoutException:
-        print("Timed out waiting for page to load")
     soup = BeautifulSoup(driver.page_source, 'lxml')        
     driver.quit()
     # scrape element with direct type='search'
@@ -120,7 +131,25 @@ def scrape(url):
     filter_attribute(soup)
     # scrape raw data after filter
     raw_data = soup.findAll("input")
-        
+    if not raw_data:  
+        """Scrape website by request module"""
+        session = requests.Session()
+        adapter = requests.adapters.HTTPAdapter(max_retries=2)
+        session.mount('https://', adapter)
+        session.mount('http://', adapter)
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"}
+        page = session.get(url, headers=headers, timeout=2)
+        response = page.text
+        page.close()
+        soup = BeautifulSoup(response, "lxml")
+        type_search = soup.findAll("input", {"type":"search"})       
+        # sleep(1)
+        # filter element
+        filter_attribute(soup)
+        # Scrape raw data after filter
+        raw_data = soup.findAll("input")
+        print('SCRAPED BY REQUEST MODULE')
+        print(raw_data)
     # If list has more than one element
     # filter again
     attributes = ['autocomplete', 'autocapitalize', 'aria-autocomplete', 
@@ -131,13 +160,8 @@ def scrape(url):
             if True in check_attr.values():
                 a=[]
                 a.append(r)
-                raw_data=a            
-            # else:
-            #     # if there is not input element after filter
-            #     # write verdict ='ERROR'
-            #     verdicts(domain,test_output[2])
-
-    # if not possible to scrape the data on this website
+                raw_data=a                     
+    # if not possible to scrape the data on website
     if not raw_data:  
         # collect the input element whose attribute type='search'
         raw_data = type_search
@@ -150,15 +174,38 @@ def scrape(url):
     websites.append(domain)
 
     # Write direct to text format
-    # with open(output_file, 'a', encoding='utf-8') as f:
+    # with open(OUTPUT_FILE, 'a', encoding='utf-8') as f:
     #     print(websites, raw_data, file=f)
 
     # Write to cvs format
-    with open(output_file, 'a', encoding='utf-8', newline='') as f:
+    with open(OUTPUT_FILE, 'a', encoding='utf-8', newline='') as f:
         writer = csv.writer(f)
         for i in zip(websites, raw_data):
          writer.writerow(i)
+
+def locator_search(raw_data):
+    element_key = ['name','placeholder','class','id','aria-label','title','role','accesskey','type'] 
+    for key in element_key:
+        if key in raw_data:
+            try:
+                # search_term=self.driver.find_element_by_xpath("//input[@name='query']")
+                stringxPath="//input[@" + key + "='" + raw_data[key] + "']" 
+
+                locator = driver.find_element_by_xpath((stringxPath))
+                locator.clear()
+                locator.send_keys(SEARCH_TERM)
+                locator.send_keys(Keys.RETURN)
+                break
+            
+                          
+            except (NoSuchElementException, ElementNotVisibleException, ElementNotInteractableException):
+                pass
+        
+
+
+    
    
+
 ''' 
 
 Open data file to read the list of urls
@@ -167,23 +214,59 @@ then using the scrape module to scrape the data
 '''
 if __name__ == '__main__':
 
-    with open(url_file, 'r') as input_file:
-        # Read line with specific number of urls
-        lines_cache = islice(input_file, start_url, end_url+1)   
-        # Read line by line and append 'https://'
-        for current_line in lines_cache:
-            domain = current_line.split()[1]
-            url="https://"+ domain
-            try:
-                scrape(url)
-            # Add exception when connecting to url is failed
-            except Exception as e:   
-                verdicts(domain,test_output[2])
+    '''
+        Scrape website
+    '''
+    # with open(URL_FILE, 'r') as input_file:
+    #     # Read line with specific number of urls
+    #     lines_cache = islice(input_file, start_url, end_url)   
+    #     # Read line by line and append 'https://'
+    #     for current_line in lines_cache:
+    #         domain = current_line.split()[1]
+    #         url="https://"+ domain
+    #         try:
+    #             scrape(url)
+    #         # Add exception when connecting to url is failed
+    #         except Exception as e:   
+    #             verdicts(domain,test_output[2])
 
+    '''
+        Test search functionality of website
+    '''
+    with open(OUTPUT_FILE, 'r', encoding='utf-8') as out_file:
+        reader = csv.reader(out_file, delimiter=',')
+        for row in reader:
+            # convert raw data to dictionary
+            url="https://"+ row[0]
+            raw_data={k:v.strip('"') for k,v in re.findall(r'(\S+)=(".*?"|\S+)', row[1])}
+            # print(raw_data['name'])
+            option = webdriver.ChromeOptions()
+            option.add_extension(COOKIE_EXTENTION)
+            option.add_extension(UBLOCK_EXTENTION)
+            driver = webdriver.Chrome(chrome_options=option)
+            driver.get(url)
+            driver.implicitly_wait(10)
+            locator = locator_search(raw_data)
+            if not locator:
+                verdicts(row[0],test_output[1])
+            else:
+                # locator.send_keys(SEARCH_TERM)
+                # locator.send_keys(Keys.RETURN)
+                verdicts(row[0],test_output[0])
+                
+             
+
+
+
+    
+    
+    '''
+        Logs and reports
+    '''
     # End time running
-    end_time = timer()
-    # Excuted time running
-    excuted_time = str(timedelta(seconds=(end_time - start_time)))
-    # Write runing time to report
-    with open(report_file, 'a', encoding='utf-8') as f:
-        print('%s was scraped from %d websites in:'%(csv_file, number_of_urls), excuted_time, file=f)
+    # end_time = timer()
+    # # Excuted time running
+    # excuted_time = str(timedelta(seconds=(end_time - start_time)))
+    # # Write runing time to report
+    # with open(REPORT_FILE, 'a', encoding='utf-8') as f:
+    #     print('%s was scraped from %d websites in:'%(CSV_FILE, number_of_urls), excuted_time, file=f)

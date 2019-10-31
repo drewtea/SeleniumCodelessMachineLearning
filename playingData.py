@@ -7,7 +7,7 @@ from sklearn.preprocessing import LabelEncoder
 
 
 
-DF_FILE = Path ('data') /"df_5000.csv"
+DF_FILE = Path ('data') /"label_data_5000.csv"
 empty_keys = ['name','placeholder','class','id','aria-label']
 
 # df = pd.read_csv(DF_FILE, usecols=('name', 'placeholder', 'class','id','aria-label'))

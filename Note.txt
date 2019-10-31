@@ -109,3 +109,8 @@ The page is rendered with JavaScript making more requests to fetch additional da
 
  # Chrome vs Firefox
  for Scraping chrome perform better
+Chrome: Version 78.0.3904.70 (Official Build) (64-bit)
+Firefox: 70.0 (64-bit)
+IE: 11.418.18362
+Microsoft Edge 44.18362.387.0
+Opera: 76.0.3809.132

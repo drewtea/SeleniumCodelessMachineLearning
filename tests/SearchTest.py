@@ -8,12 +8,12 @@ from selenium.webdriver.common.keys import Keys
 
 class Search(unittest.TestCase):
     # declare variable to store the URL to be visited
-    base_url="https://thehill.com"
+    base_url="https://vk.com"
 
     # --- Pre - Condition ---
     def setUp(self):
         # declare and initialize driver variable
-        self.driver=webdriver.Firefox(executable_path="D:\\CCN\\Intership_TSP\\CodelessML\\tests\\geckodriver.exe")
+        self.driver=webdriver.Chrome()
        
         # browser should be loaded in maximized window
         self.driver.maximize_window()
@@ -32,7 +32,7 @@ class Search(unittest.TestCase):
         self.driver.get(self.base_url) 
         
         # to enter search term, we need to locate the search textbox
-        search_term=self.driver.find_element_by_xpath('//input[@placeholder="TYPE TO SEARCH"]')
+        search_term=self.driver.find_element_by_id('ts_input')
 
         # to clear any text in the search textbox
         search_term.clear()
@@ -42,6 +42,7 @@ class Search(unittest.TestCase):
 
         # to search for the entered search term
         search_term.send_keys(Keys.RETURN)
+        self.driver.implicitly_wait(20)
 
         # to verify if the search results page loaded
         #self.assertIn(self.search_term,self.driver.title)

@@ -1,134 +1,370 @@
-from pathlib import Path
-from time import sleep
-import requests
-import re
 from bs4 import BeautifulSoup
-from itertools import islice
-import csv
-import linecache
-from timeit import default_timer as timer
-from datetime import *
-
-# Start timer to measure execuation time for the report
-start_time = timer()
-
-# datestamp = str(datetime.now().strftime('%d_%m_%Y_%H_%M_%S'))
-# timestamp = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
-# Define number of urls to process, 
-# start line and end line of url file
-start_url = 1
-end_url = 10
-number_of_urls = end_url - start_url
+from selenium import webdriver
+import re, os
+import requests
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.options import Options
 
 
-# Path to url file
-url_file = Path("data") / "https-sites.txt"
-# Path to output file
-csv_file = str(start_url)+ '_' + str(end_url) + '_urldata' + '.txt'
-# csv_file = str(start_url)+ '_' + str(end_url) + '_urldata' + '.txt'
-output_file = Path("data") / csv_file
-
-# Path to report file
-report_file = Path("reports") / "report.txt"
-
-
-# data =[]
-# review=[]
-
-# ==== Scrape search field content  =====
-def scrape(url):
-   
-    """Scrape scheduled link previews."""
-    session = requests.Session()
-    adapter = requests.adapters.HTTPAdapter(max_retries=2)
-    session.mount('https://', adapter)
-    session.mount('http://', adapter)
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"}
-    page = session.get(url, headers=headers, timeout=2)
-    response = page.text
-    page.close()
-    soup = BeautifulSoup(response, "lxml")
-    # sleep(1)
-    for hidden in soup.findAll("input", {'style':'display:none'}): 
-        hidden.decompose()
-    # Remove none-display attribute
-    for none_display in soup.findAll("input",attrs=({"type":{"password","submit","radio","hidden", "checkbox"}})):
-        none_display.decompose()
-
-    for h in soup.find_all("input", {'hidden':'hidden'}): 
-        h.decompose()
-    # Regex pattern
-    # Remove login attribute by regex pattern
-    removePattern=re.compile("(user|login|username|name|password|email)")
-    # login = soup.findAll("input")
-
-    for id_login in soup.find_all("input", attrs={'class':re.compile(removePattern)}):
-        id_login.decompose()
-    for id_login in soup.find_all("input", attrs={'id':re.compile(removePattern)}):
-        id_login.decompose()
-    for name_login in soup.find_all("input", attrs={'name':re.compile(removePattern)}):
-        name_login.decompose()
+def test_search(soup):
+    if soup.has_attr('name'):
+        print('search by name')
+    elif soup.has_attr('placeholder'):
+       print()
+    elif soup.has_attr('class'):
+        print()
+    elif soup.has_attr('id'):
+        print()
+    elif soup.has_attr('aria-label'):
+        print
+    elif soup.has_attr('title'):
+        print
+    elif soup.has_attr('tabindex'):
+        print
+    elif soup.has_attr('role'):
+        print
+    elif soup.has_attr('accesskey'):
+        print
+    elif soup.has_attr('type'):
+        print
 
 
-    # ###  Print the result after filter
-    # Define list of urls after preprocess
-    raw_data = soup.findAll("input")
-    # Print exception if the connection is failed
-    # if Exception ==True:
-    #     raw_data.append(e)
-    # print(raw_data)
-    if not soup.find_all("input"):
-        raw_data.append('NO DATA')
+def locator_search(raw_data):
+    if 'name' in raw_data:
+        locator = driver.find_element_by_name(raw_data['name'])
+    elif 'placeholder' in raw_data:
+        locator = driver.find_element_by_xpath("//input[@placeholder='" + raw_data['placeholder'] + "']")
+    elif 'class' in raw_data:
+        locator = driver.find_element_by_class_name(raw_data['class'])
+    elif 'id' in raw_data:
+        locator = driver.find_element_by_id(raw_data['id'])
+    elif 'aria-label' in raw_data:
+        locator = driver.find_element_by_xpath("//input[@aria-label='" + raw_data['aria-label'] + "']")
+    elif 'title' in raw_data:
+        locator = driver.find_element_by_xpath("//input[@title='" + raw_data['title'] + "']")
+    elif 'tabindex' in raw_data:
+        locator = driver.find_element_by_xpath("//input[@tabindex='" + raw_data['tabindex'] + "']")
+    elif 'role' in raw_data:
+        locator = driver.find_element_by_xpath("//input[@role='" + raw_data['role'] + "']")
+    elif 'accesskey' in raw_data:
+        locator = driver.find_element_by_xpath("//input[@accesskey='" + raw_data['accesskey'] + "']")
+    elif 'type' in raw_data:
+        locator = driver.find_element_by_xpath("//input[@title='search']")
+    return locator
+
+# Construct dict for locator handler
+# locator_handler = {
+#                     raw_data['name']: driver.find_element_by_name(raw_data['name']),
+#                     raw_data['placeholder']: driver.find_element_by_xpath("//input[@placeholder='" + raw_data['placeholder'] + "']"),
+#                     raw_data['class']: driver.find_element_by_class_name(raw_data['class']),
+#                     raw_data['id']: driver.find_element_by_id(raw_data['id'])
+#                 }
+
+# list
+# locator_handler = [
+#                     (raw_data['name'], driver.find_element_by_name(raw_data['name'])),
+#                     (raw_data['placeholder'], driver.find_element_by_xpath("//input[@placeholder='" + raw_data['placeholder'] + "']")),
+#                     (raw_data['class'], driver.find_element_by_class_name(raw_data['class'])),
+#                     (raw_data['id'], driver.find_element_by_id(raw_data['id']))
+#                 ]
+for whichDict, whichFunc in locator_handler:
+    try:
+        search_box = locator_handler
+    except KeyError:
+        continue
     else:
-        d=str(raw_data)
-        u={k:v.strip('"') for k,v in re.findall(r'(\S+)=(".*?"|\S+)', d)}
-    websites=[]
-    websites.append(url)
-    print(u)
+        whichFunc()
+        break
+else:
+    print('CAN NOT TEST')
 
-    
-        #convert to dictionary
-        
+# define xpath queries
+        xpaths = ["//input[@name='" + raw_data['name'] + "']", 
+                  "//input[@placeholder='" + raw_data['placeholder'] + "']",
+                  "//input[@class='" + raw_data['class'] + "']",
+                  "//input[@id='" + raw_data['id'] + "']",
+                  "//input[@aria-label='" + raw_data['aria-label'] + "']",
+                  "//input[@title='" + raw_data['title'] + "']",
+                  "//input[@tabindex='" + raw_data['tabindex'] + "']",
+                  "//input[@role='" + raw_data['role'] + "']",
+                  "//input[@accesskey='" + raw_data['accesskey'] + "']",
+                  "//input[@title='search']"                  
+                  ]
 
-    # Write direct to text format
-    with open(output_file, 'a', encoding='utf-8') as f:
-        print(websites, u, file=f)
 
-    # Write to cvs format
-    # with open(output_file, 'a', encoding='utf-8', newline='') as f:
-    #     writer = csv.writer(f)
-    #     for i in zip(websites, u):
-    #         writer.writerow(i)
-   
-''' 
+########################
 
-Open data file to read the list of urls
-then use scrape module to retrieve the data
-
-'''
-with open(url_file, 'r') as input_file:
-#     # Skip first line
-#     next(input_file)
-    # Read line with specific number of urls
-    lines_cache = islice(input_file, start_url, end_url)   
-# lines_cache = linecache.getlines('test-sites.txt')[start_url:end_url]
-    # Read line by line and append 'https://'
-    for current_line in lines_cache:
-        url="https://"+ current_line.split()[1]
+def locator_search(raw_data):
+    if 'name' in raw_data:
         try:
-            s = scrape(url)
-        except Exception as e:   
-            websites=[]   
-            error = []      
-            websites.append(url)
-            error.append('ERROR')
-            with open(output_file, 'a', encoding='utf-8', newline='') as f:
-                writer = csv.writer(f)
-                for i in zip(websites, error):
-                    writer.writerow(i)
-# Print to report
-end_time = timer()
-# excuted_time = end_time - start_time
-excuted_time = str(timedelta(seconds=(end_time - start_time)))
-with open(report_file, 'a', encoding='utf-8') as f:
-    print('%s was scraped from %d websites in:'%(csv_file, number_of_urls), excuted_time, file=f)
+            locator = driver.find_element_by_name(raw_data['name'])
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'placeholder' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@placeholder='" + raw_data['placeholder'] + "']")
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'class' in raw_data:
+        try:
+            locator = driver.find_element_by_class_name(raw_data['class'])
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'id' in raw_data:
+        try:
+            locator = driver.find_element_by_id(raw_data['id'])
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'aria-label' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@aria-label='" + raw_data['aria-label'] + "']")
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'title' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@title='" + raw_data['title'] + "']")
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'tabindex' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@tabindex='" + raw_data['tabindex'] + "']")
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'role' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@role='" + raw_data['role'] + "']")
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'accesskey' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@accesskey='" + raw_data['accesskey'] + "']")
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'type' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@title='search']")
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    return locator
+
+
+
+    ####
+    def locator_search(raw_data):
+
+    try:
+        locator = driver.find_element_by_name(raw_data['name'])
+        locator.clear()
+    except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+        return []
+
+    try:
+        locator = driver.find_element_by_xpath("//input[@placeholder='" + raw_data['placeholder'] + "']")
+        locator.clear()
+    except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+        return []
+
+    try:
+        locator = driver.find_element_by_class_name(raw_data['class'])
+        locator.clear()
+    except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+        return []
+
+    try:
+        locator = driver.find_element_by_id(raw_data['id'])
+        locator.clear()
+    except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+        return []
+
+    try:
+        locator = driver.find_element_by_xpath("//input[@aria-label='" + raw_data['aria-label'] + "']")
+        locator.clear()
+    except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+        return []
+
+    try:
+        locator = driver.find_element_by_xpath("//input[@title='" + raw_data['title'] + "']")
+        locator.clear()
+    except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+        return []
+
+    try:
+        locator = driver.find_element_by_xpath("//input[@tabindex='" + raw_data['tabindex'] + "']")
+        locator.clear()
+    except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+        return []
+
+    try:
+        locator = driver.find_element_by_xpath("//input[@role='" + raw_data['role'] + "']")
+        locator.clear()
+    except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+        return []
+
+    try:
+        locator = driver.find_element_by_xpath("//input[@accesskey='" + raw_data['accesskey'] + "']")
+        locator.clear()
+    except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+        return []
+
+    try:
+        locator = driver.find_element_by_xpath("//input[@title='search']")
+        locator.clear()
+    except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+        return []
+    return locator
+
+
+    #######
+    def locator_search(raw_data):
+    if 'name' in raw_data:
+        try:
+            locator = driver.find_element_by_name(raw_data['name'])
+            locator.clear()
+            locator.send_keys(SEARCH_TERM)
+            locator.send_keys(Keys.RETURN)
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'placeholder' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@placeholder='" + raw_data['placeholder'] + "']")
+            locator.send_keys(SEARCH_TERM)
+            locator.send_keys(Keys.RETURN)
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'class' in raw_data:
+        try:
+            locator = driver.find_element_by_class_name(raw_data['class'])
+            locator.send_keys(SEARCH_TERM)
+            locator.send_keys(Keys.RETURN)
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'id' in raw_data:
+        try:
+            locator = driver.find_element_by_id(raw_data['id'])
+            locator.send_keys(SEARCH_TERM)
+            locator.send_keys(Keys.RETURN)
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'aria-label' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@aria-label='" + raw_data['aria-label'] + "']")
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'title' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@title='" + raw_data['title'] + "']")
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'tabindex' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@tabindex='" + raw_data['tabindex'] + "']")
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'role' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@role='" + raw_data['role'] + "']")
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'accesskey' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@accesskey='" + raw_data['accesskey'] + "']")
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    elif 'type' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@title='search']")
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    return locator
+
+
+
+    ####################
+
+    if 'name' in raw_data:
+        try:
+            locator = driver.find_element_by_name(raw_data['name'])
+            locator.clear()
+            locator.send_keys(SEARCH_TERM)
+            locator.send_keys(Keys.RETURN)
+            
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            
+            pass
+    if 'placeholder' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@placeholder='" + raw_data['placeholder'] + "']")
+            locator.clear()
+            locator.send_keys(SEARCH_TERM)
+            locator.send_keys(Keys.RETURN)
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            pass
+    if 'class' in raw_data:
+        try:
+            locator = driver.find_element_by_class_name(raw_data['class'])
+            locator.clear()
+            locator.send_keys(SEARCH_TERM)
+            locator.send_keys(Keys.RETURN)
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            pass
+    if 'id' in raw_data:
+        try:
+            locator = driver.find_element_by_id(raw_data['id'])
+            locator.clear()
+            locator.send_keys(SEARCH_TERM)
+            locator.send_keys(Keys.RETURN)
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            pass
+    if 'aria-label' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@aria-label='" + raw_data['aria-label'] + "']")
+            locator.clear()
+            locator.send_keys(SEARCH_TERM)
+            locator.send_keys(Keys.RETURN)
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            pass
+    if 'title' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@title='" + raw_data['title'] + "']")
+            locator.clear()
+            locator.send_keys(SEARCH_TERM)
+            locator.send_keys(Keys.RETURN)
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            pass
+     # if 'tabindex' in raw_data:
+    #     try:
+    #         locator = driver.find_element_by_xpath("//input[@tabindex='" + raw_data['tabindex'] + "']")
+    #         locator.clear()
+    #         locator.send_keys(SEARCH_TERM)
+    #         locator.send_keys(Keys.RETURN)
+    #     except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+    #         pass
+    if 'role' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@role='" + raw_data['role'] + "']")
+            locator.clear()
+            locator.send_keys(SEARCH_TERM)
+            locator.send_keys(Keys.RETURN)
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            pass
+    if 'accesskey' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@accesskey='" + raw_data['accesskey'] + "']")
+            locator.clear()
+            locator.send_keys(SEARCH_TERM)
+            locator.send_keys(Keys.RETURN)
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            pass
+    if 'type' in raw_data:
+        try:
+            locator = driver.find_element_by_xpath("//input[@title='search']")
+            locator.clear()
+            locator.send_keys(SEARCH_TERM)
+            locator.send_keys(Keys.RETURN)
+        except (NoSuchElementException ,ElementNotVisibleException, ElementNotInteractableException):
+            return []
+    return locator
