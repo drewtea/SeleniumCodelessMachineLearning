@@ -18,6 +18,7 @@ UBLOCK_EXTENTION = Path("extention") / "ublock.crx"
 DRIVER_PATH = Path('webdriver')
 REPORT_PATH = Path('results') / 'reports'
 LOG_PATH =Path('results') / 'logs'
+SEARCH_TERM = "Test Automation with ML/AI"
 
 
 # Chose the browser for testing
@@ -108,50 +109,60 @@ class LocatorElement():
 
 
 class SearchTest(unittest.TestCase):
-    # declare variable to store the URL to be visited
-    base_url="https://vk.com"
-    # --- Pre - Condition ---
-    # declare variable to store search term
-    search_term="600"
 
-    def setUp(self):
+    def setUp(self,url):
+        
+        '''
+            Setup browser driven by Selenium module
+        '''
         # declare and initialize driver variable
         # self.driver =  getattr(webdriver)
-        # option = webdriver.ChromeOptions()
+        option = webdriver.ChromeOptions()
         option = webdriver.ChromeOptions()
         option.add_extension(COOKIE_EXTENTION)
         option.add_extension(UBLOCK_EXTENTION)
         # declare and initialize driver variable
         self.driver=webdriver.Chrome(chrome_options=option)
+
+        # Firefox
+        # self.driver = webdriver.Firefox()
        
         # browser should be loaded in maximized window
         self.driver.maximize_window()
 
         # driver should wait implicitly for a given duration, for the element under consideration to load.
         # to enforce this setting we will use builtin implicitly_wait() function of our 'driver' object.
-        self.driver.implicitly_wait(10)  #10 is in seconds
-
+        self.driver.get(url)
+        self.driver.implicitly_wait(3)
     
     # --- Steps ---
-    
-    def test_search(self):
-        # to load a given URL in browser window
-        self.driver.get(self.base_url) 
+    '''
+        Funtion to find locator
+    '''
+    def locator_search(self,raw_data):
+        element_key = ['name','placeholder','class','id','aria-label','title','role','accesskey','type'] 
+        for key in element_key:
+            if key in raw_data:
+                try:
+                    # search_term=self.driver.find_element_by_xpath("//input[@name='query']")
+                    stringxPath="//input[@" + key + "='" + raw_data[key] + "']" 
+                    
+                    locator = self.driver.find_element_by_xpath((stringxPath))
+                    locator.clear()
+                    locator.send_keys(SEARCH_TERM)
+                    # self.driver.implicitly_wait(20)
+                    locator.send_keys(Keys.RETURN)
+                    self.driver.implicitly_wait(20)
+                    # to verify if the search results page loaded
+                    self.assertTrue(SEARCH_TERM in self.driver.page_source)
+                    break                                     
+                except (NoSuchElementException, ElementNotVisibleException, ElementNotInteractableException):
+                    pass
+                
         
-        # to enter search term, we need to locate the search textbox
-        # search_term=self.driver.find_element_by_class_name("css-1fe7a5q")
-        # click_button=self.driver.find_element_by_xpath("//button[@id='search_button']")
-        # click_button.click()
-        search_term=self.driver.find_element_by_xpath("//input[@class='text ts_input']")
-        # to clear any text in the search textbox
-        # search_term.clear()
+    # def tearDown(self):
+    #     # to close the browser
+    #     self.driver.close()
 
-        # to enter the search term in the search textbox via send_keys() function
-        search_term.send_keys(self.search_term)
-
-        # to search for the entered search term
-        search_term.send_keys(Keys.RETURN) 
-
-        
 if __name__ == '__main__':
     unittest.main(testRunner=HtmlTestRunner.HTMLTestRunner(output=REPORT_PATH))

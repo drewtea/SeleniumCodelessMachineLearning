@@ -17,7 +17,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException, ElementNotVisibleException
 import os
-from searchTC import LocatorElement
+import unittest
+from searchTC import SearchTest
 
 # Chose the browser for testing
 # browser = webdriver.Chrome()    # Chrome version: 78.0.3904.70 (Official Build) (64-bit)
@@ -34,7 +35,7 @@ SEARCH_TERM = "Test Automation with ML/AI"
 # Define number of urls to process
 # start line and end line of url file
 start_url = 0
-end_url = 4
+end_url = 1
 number_of_urls = end_url - start_url
 test_output = ['PASS', 'FAIL', 'ERROR']
 
@@ -120,6 +121,9 @@ def scrape(url):
     option.add_extension(COOKIE_EXTENTION)
     option.add_extension(UBLOCK_EXTENTION)
     driver = webdriver.Chrome(chrome_options=option)
+    # Firefox
+    # driver = webdriver.Firefox()
+    # driver = webdriver.Opera()
     driver.get(url)
     driver.implicitly_wait(10)
     soup = BeautifulSoup(driver.page_source, 'lxml')        
@@ -186,21 +190,25 @@ def scrape(url):
 '''
     Funtion to find locator
 '''
-def locator_search(raw_data):
-    element_key = ['name','placeholder','class','id','aria-label','title','role','accesskey','type'] 
-    for key in element_key:
-        if key in raw_data:
-            try:
-                # search_term=self.driver.find_element_by_xpath("//input[@name='query']")
-                stringxPath="//input[@" + key + "='" + raw_data[key] + "']" 
+# def locator_search(raw_data):
+#     element_key = ['name','placeholder','class','id','aria-label','title','role','accesskey','type'] 
+#     for key in element_key:
+#         if key in raw_data:
+#             try:
+#                 # search_term=self.driver.find_element_by_xpath("//input[@name='query']")
+#                 stringxPath="//input[@" + key + "='" + raw_data[key] + "']" 
 
-                locator = driver.find_element_by_xpath((stringxPath))
-                locator.clear()
-                locator.send_keys(SEARCH_TERM)
-                locator.send_keys(Keys.RETURN)
-                break                                     
-            except (NoSuchElementException, ElementNotVisibleException, ElementNotInteractableException):
-                pass
+#                 locator = driver.find_element_by_xpath((stringxPath))
+#                 locator.clear()
+#                 locator.send_keys(SEARCH_TERM)
+#                 locator.send_keys(Keys.RETURN)
+#                 break                                     
+#             except (NoSuchElementException, ElementNotVisibleException, ElementNotInteractableException):
+#                 pass
+#             else:
+#                 return []
+            
+            
         
 
 ''' 
@@ -214,18 +222,18 @@ if __name__ == '__main__':
     '''
         Scrape website
     '''
-    # with open(URL_FILE, 'r') as input_file:
-    #     # Read line with specific number of urls
-    #     lines_cache = islice(input_file, start_url, end_url)   
-    #     # Read line by line and append 'https://'
-    #     for current_line in lines_cache:
-    #         domain = current_line.split()[1]
-    #         url="https://"+ domain
-    #         try:
-    #             scrape(url)
-    #         # Add exception when connecting to url is failed
-    #         except Exception as e:   
-    #             verdicts(domain,test_output[2])
+    with open(URL_FILE, 'r') as input_file:
+        # Read line with specific number of urls
+        lines_cache = islice(input_file, start_url, end_url)   
+        # Read line by line and append 'https://'
+        for current_line in lines_cache:
+            domain = current_line.split()[1]
+            url="https://"+ domain
+            try:
+                scrape(url)
+            # Add exception when connecting to url is failed
+            except Exception as e:   
+                verdicts(domain,test_output[2])
 
     '''
         Test search functionality of website
@@ -237,33 +245,29 @@ if __name__ == '__main__':
             url="https://"+ row[0]
             raw_data={k:v.strip('"') for k,v in re.findall(r'(\S+)=(".*?"|\S+)', row[1])}
             # print(raw_data['name'])
-            option = webdriver.ChromeOptions()
-            option.add_extension(COOKIE_EXTENTION)
-            option.add_extension(UBLOCK_EXTENTION)
-            driver = webdriver.Chrome(chrome_options=option)
-            driver.get(url)
-            driver.implicitly_wait(10)
-            locator = locator_search(raw_data)
-            if not locator:
-                verdicts(row[0],test_output[1])
-            else:
-                # locator.send_keys(SEARCH_TERM)
-                # locator.send_keys(Keys.RETURN)
+            test = SearchTest()
+            test.setUp(url)
+            test.locator_search(raw_data)
+                            
+            t = unittest.main(exit=False)
+            if t.result:
+                # Pass case
                 verdicts(row[0],test_output[0])
-                
-             
+            else:
+                # Fail case
+                verdicts(row[0],test_output[1])
+           
 
-
-
-    
-    
+     
     '''
         Logs and reports
     '''
-    # End time running
-    # end_time = timer()
-    # # Excuted time running
-    # excuted_time = str(timedelta(seconds=(end_time - start_time)))
-    # # Write runing time to report
-    # with open(REPORT_FILE, 'a', encoding='utf-8') as f:
-    #     print('%s was scraped from %d websites in:'%(CSV_FILE, number_of_urls), excuted_time, file=f)
+    #   End time running
+    end_time = timer()
+    # Excuted time running
+    excuted_time = str(timedelta(seconds=(end_time - start_time)))
+    # Write runing time to report
+    with open(VERDICT_FILE, 'a', encoding='utf-8') as f:
+        # print('%s was scraped from %d websites in:'%(CSV_FILE, number_of_urls), excuted_time, file=f)
+        print('==> TOTAL: Tests were run against %d websites in:'%(number_of_urls), excuted_time, file=f)
+
