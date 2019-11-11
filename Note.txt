@@ -114,3 +114,7 @@ Firefox: 70.0 (64-bit)
 IE: 11.418.18362
 Microsoft Edge 44.18362.387.0
 Opera: 76.0.3809.132
+
+Extention:
+Ranorex Selocity
+

@@ -18,7 +18,7 @@ UBLOCK_EXTENTION = Path("extention") / "ublock.crx"
 DRIVER_PATH = Path('webdriver')
 REPORT_PATH = Path('results') / 'reports'
 LOG_PATH =Path('results') / 'logs'
-SEARCH_TERM = "Test Automation with ML/AI"
+SEARCH_TERM = "ML"
 
 
 # Chose the browser for testing
@@ -139,22 +139,21 @@ class SearchTest(unittest.TestCase):
     '''
         Funtion to find locator
     '''
-    def locator_search(self,raw_data):
+    def test_locator_search(self,raw_data):        
         element_key = ['name','placeholder','class','id','aria-label','title','role','accesskey','type'] 
         for key in element_key:
             if key in raw_data:
                 try:
                     # search_term=self.driver.find_element_by_xpath("//input[@name='query']")
                     stringxPath="//input[@" + key + "='" + raw_data[key] + "']" 
-                    
                     locator = self.driver.find_element_by_xpath((stringxPath))
                     locator.clear()
                     locator.send_keys(SEARCH_TERM)
                     # self.driver.implicitly_wait(20)
                     locator.send_keys(Keys.RETURN)
-                    self.driver.implicitly_wait(20)
+                    WebDriverWait(self.driver, 10).until(EC.title_contains(SEARCH_TERM))
                     # to verify if the search results page loaded
-                    self.assertTrue(SEARCH_TERM in self.driver.page_source)
+                    self.assertIn(SEARCH_TERM, self.driver.title)
                     break                                     
                 except (NoSuchElementException, ElementNotVisibleException, ElementNotInteractableException):
                     pass
