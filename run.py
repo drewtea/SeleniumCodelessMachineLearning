@@ -15,6 +15,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.firefox.options import Options as Options_FF
+
 from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException, ElementNotVisibleException
 import os
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -29,14 +31,15 @@ from searchTC import SearchTest
     # 'opera':      Opera version: 76.0.3809.132
     # 'ie':         Internet Explorer version: 11.418.18362
     # 'edge':       Microsoft Edge version: 44.18362.387.0 build 18362
+    # 'phantom':    PhantomJS version:
     # 'mult_brs':   Multiple browsers ( testing against cross browsers)
-WEB_BROWSER = 'ie'
+WEB_BROWSER = 'chrome'
 # Search keyword for testing search functionality
 SEARCH_TERM = "Test Automation with ML/AI"
 # Define number of urls to process
 # start line and end line of url file
 start_url = 0
-end_url = 3
+end_url = 100
 number_of_urls = end_url - start_url
 test_output = ['PASS', 'FAIL', 'ERROR']
 
@@ -66,15 +69,20 @@ def browser(browser_name):
     # Chrome
     if browser_name == 'chrome':
         options = Options()
-        options.add_extension(COOKIE_CHROME)
-        options.add_extension(UBLOCK_CHROME)
+        # options.add_extension(COOKIE_CHROME)
+        # options.add_extension(UBLOCK_CHROME)
+        # headless browser
+        options.add_argument('headless')
         driver = webdriver.Chrome(options=options)
     # Firefox
     if browser_name == 'firefox':
         # profile = webdriver.FirefoxProfile()
         # profile.add_extension(COOKIE_FF)
         # profile.add_extension(UBLOCK_FF)
-        driver = webdriver.Firefox()
+        # headless browser
+        options = Options_FF()
+        options.headless = True
+        driver = webdriver.Firefox(options=options)
     # Opera
     if browser_name == 'opera':
         options = webdriver.ChromeOptions()
@@ -87,6 +95,11 @@ def browser(browser_name):
     # Internet Explorer
     if browser_name == 'ie':
         driver = webdriver.Ie()
+    
+    # PhantomJs
+    # Internet Explorer
+    if browser_name == 'phantom':
+        driver = webdriver.PhantomJS()
 
 	# multiple browsers ( testing against cross browsers)
     if browser_name == 'mult_brs':
@@ -94,9 +107,9 @@ def browser(browser_name):
         desired_cap.append ({'browserName':'chrome', 'javascriptEnabled':'true', 'version':'', 'platform':'ANY'})
         desired_cap.append ({'browserName':'firefox', 'javascriptEnabled':'true', 'version':'', 'platform':'ANY'})
         browser_list = ['chrome', 'firefox', 'opera', 'edge', 'ie']        
-        for browser in browser_list:
+        for browser in desired_cap:
             driver = webdriver.Remote(
-            command_executor='http://localhost:4444/wd/hub',
+            command_executor='http://192.168.1.18:30756',
             desired_capabilities=browser)
     # Firefox
     # driver = webdriver.Firefox()
@@ -255,18 +268,18 @@ if __name__ == '__main__':
     '''
         Scrape website content
     '''
-    with open(URL_FILE, 'r') as input_file:
-        # Read line with specific number of urls
-        lines_cache = islice(input_file, start_url, end_url)   
-        # Read line by line and append 'https://'
-        for current_line in lines_cache:
-            domain = current_line.split()[1]
-            url="https://"+ domain
-            try:
-                scrape(url)
-            # Add exception when connecting to url is failed
-            except Exception as e:   
-                verdicts(domain,test_output[2])
+    # with open(URL_FILE, 'r') as input_file:
+    #     # Read line with specific number of urls
+    #     lines_cache = islice(input_file, start_url, end_url)   
+    #     # Read line by line and append 'https://'
+    #     for current_line in lines_cache:
+    #         domain = current_line.split()[1]
+    #         url="https://"+ domain
+    #         try:
+    #             scrape(url)
+    #         # Add exception when connecting to url is failed
+    #         except Exception as e:   
+    #             verdicts(domain,test_output[2])
 
     '''
         Test search functionality of website
@@ -280,6 +293,7 @@ if __name__ == '__main__':
             driver=browser(WEB_BROWSER)
             driver.get(url)
             driver.implicitly_wait(10)
+            print(row[0])
             locator_element(raw_data)
             try:
                 WebDriverWait(driver, 10).until(EC.title_contains(SEARCH_TERM))
@@ -292,7 +306,7 @@ if __name__ == '__main__':
             else:
                 # Fail case
                 verdicts(row[0],test_output[1])
-     
+            driver.close()
     '''
         Logs and reports
     '''
