@@ -1,14 +1,15 @@
+import os
 from pathlib import Path
-from time import sleep
 import re
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from itertools import islice
 import requests
 import csv
 import linecache
+import time
+from datetime import datetime
+from datetime import timedelta
 from timeit import default_timer as timer
-from datetime import *
+from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -16,13 +17,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.firefox.options import Options as Options_FF
-
 from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException, ElementNotVisibleException
-import os
+from selenium.common.exceptions import InvalidElementStateException
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from itertools import islice
 
-import unittest
-from searchTC import SearchTest
 
 
 ''' Chose the browser for testing '''
@@ -34,22 +33,29 @@ from searchTC import SearchTest
     # 'phantom':    PhantomJS version:
     # 'mult_brs':   Multiple browsers ( testing against cross browsers)
 WEB_BROWSER = 'chrome'
+
+''' Chose the option for browser '''
+    # 'none': not using option
+    # 'addon': using addon, default = None
+    # 'headless': using headless browser, default = None
+BROWSER_OPTION = 'none'
+
 # Search keyword for testing search functionality
-SEARCH_TERM = "Test Automation with ML/AI"
+SEARCH_TERM = "selenium"
 # Define number of urls to process
 # start line and end line of url file
-start_url = 0
-end_url = 100
-number_of_urls = end_url - start_url
+START_URL = 0
+END_URL = 2
+number_of_urls = END_URL - START_URL
 test_output = ['PASS', 'FAIL', 'ERROR']
 
-# datestamp = str(datetime.now().strftime('%d_%m_%Y_%H_%M_%S'))
-# timestamp = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
+datestamp = str(datetime.now().strftime('%d_%m_%Y_%H_%M_%S'))
+timestamp = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 # Path to url file
 URL_FILE = Path("data") / "test-sites.txt"
 # Path to output file
-CSV_FILE = str(start_url)+ '_' + str(end_url) + '_urldata' + '.csv'
-# txt_file = str(start_url)+ '_' + str(end_url) + '_urldata' + '.txt'
+CSV_FILE = str(START_URL)+ '_' + str(END_URL) + '_urldata' + '.csv'
+# txt_file = str(START_URL)+ '_' + str(END_URL) + '_urldata' + '.txt'
 OUTPUT_FILE = Path("data") / CSV_FILE
 # path to chrome extention
 COOKIE_CHROME = Path("extention") / "cookie_chrome.crx"
@@ -64,25 +70,36 @@ VERDICT_FILE = Path("results") / "verdict_test-sites.txt"
 
 # Start timer to measure execuation time for the report
 start_time = timer()
+
 def browser(browser_name):
     # Setup browser using Selenium
     # Chrome
-    if browser_name == 'chrome':
-        options = Options()
-        # options.add_extension(COOKIE_CHROME)
-        # options.add_extension(UBLOCK_CHROME)
-        # headless browser
-        options.add_argument('headless')
-        driver = webdriver.Chrome(options=options)
+    if browser_name == 'chrome':      
+        if BROWSER_OPTION == 'addon':
+            options = Options()
+            options.add_extension(COOKIE_CHROME)
+            options.add_extension(UBLOCK_CHROME)
+            driver = webdriver.Chrome(options=options)
+        if BROWSER_OPTION == 'headless':
+            options = Options()
+            options.add_argument('headless')
+            driver = webdriver.Chrome(options=options)
+        if BROWSER_OPTION == 'none':
+            driver = webdriver.Chrome()
     # Firefox
     if browser_name == 'firefox':
-        # profile = webdriver.FirefoxProfile()
-        # profile.add_extension(COOKIE_FF)
-        # profile.add_extension(UBLOCK_FF)
+        if BROWSER_OPTION == 'addon':
+            profile = webdriver.FirefoxProfile()
+            profile.add_extension(r"D:\CCN\Intership_TSP\CodelessML\extention\cookie_ff.xpi")
+            profile.add_extension(r"D:\CCN\Intership_TSP\CodelessML\extention\uBlock_ff.xpi")
+            driver = webdriver.Firefox(profile)
         # headless browser
-        options = Options_FF()
-        options.headless = True
-        driver = webdriver.Firefox(options=options)
+        if BROWSER_OPTION == 'headless':
+            options = Options_FF()
+            options.headless = True
+            driver = webdriver.Firefox(options=options)
+        else:
+            driver = webdriver.Firefox()
     # Opera
     if browser_name == 'opera':
         options = webdriver.ChromeOptions()
@@ -95,11 +112,6 @@ def browser(browser_name):
     # Internet Explorer
     if browser_name == 'ie':
         driver = webdriver.Ie()
-    
-    # PhantomJs
-    # Internet Explorer
-    if browser_name == 'phantom':
-        driver = webdriver.PhantomJS()
 
 	# multiple browsers ( testing against cross browsers)
     if browser_name == 'mult_brs':
@@ -111,12 +123,7 @@ def browser(browser_name):
             driver = webdriver.Remote(
             command_executor='http://192.168.1.18:30756',
             desired_capabilities=browser)
-    # Firefox
-    # driver = webdriver.Firefox()
-    # driver = webdriver.Opera()
-    # driver.get(url)
-    # driver.implicitly_wait(10)
-    # Return the driver object at the end of setup
+    
     return driver
     
     # For cleanup, quit the driver
@@ -256,7 +263,7 @@ def locator_element(raw_data):
                 locator.send_keys(SEARCH_TERM)
                 locator.send_keys(Keys.RETURN)
                 break                                     
-            except (NoSuchElementException, ElementNotVisibleException, ElementNotInteractableException):
+            except (NoSuchElementException, ElementNotVisibleException, ElementNotInteractableException, InvalidElementStateException):
                 pass          
       
 ''' 
@@ -270,7 +277,7 @@ if __name__ == '__main__':
     '''
     # with open(URL_FILE, 'r') as input_file:
     #     # Read line with specific number of urls
-    #     lines_cache = islice(input_file, start_url, end_url)   
+    #     lines_cache = islice(input_file, START_URL, END_URL)   
     #     # Read line by line and append 'https://'
     #     for current_line in lines_cache:
     #         domain = current_line.split()[1]
@@ -280,42 +287,65 @@ if __name__ == '__main__':
     #         # Add exception when connecting to url is failed
     #         except Exception as e:   
     #             verdicts(domain,test_output[2])
+    end_scrape_time = timer()
 
     '''
         Test search functionality of website
     '''
+    start_test_time = timer()
     with open(OUTPUT_FILE, 'r', encoding='utf-8') as out_file:
         reader = csv.reader(out_file, delimiter=',')
         for row in reader:            
-            url="https://"+ row[0]
+            url="https://www."+ row[0]
             # convert raw data to dictionary
             raw_data={k:v.strip('"') for k,v in re.findall(r'(\S+)=(".*?"|\S+)', row[1])}
             driver=browser(WEB_BROWSER)
+            # driver.implicitly_wait(10)
             driver.get(url)
-            driver.implicitly_wait(10)
-            print(row[0])
+            driver.implicitly_wait(5)
+            initial_url = driver.current_url
+            print("TESTING SITE: ",row[0])
             locator_element(raw_data)
-            try:
-                WebDriverWait(driver, 10).until(EC.title_contains(SEARCH_TERM))
+            driver.implicitly_wait(10)        
+            handles = driver.window_handles
+            if len(handles)>1:
+                driver.switch_to_window(handles[1])
+                initial_url = driver.current_url
+            time.sleep(1)
+            try:                
+                WebDriverWait(driver, 10).until(EC.url_changes(initial_url))                
             except TimeoutException as e:
-                print(e)               
-            
-            if SEARCH_TERM in driver.title:
+                print("Title exception: ",driver.title)    
+            title= driver.current_url
+            if SEARCH_TERM in title:
                 # Pass case
-                verdicts(row[0],test_output[0])
+                verdicts(row[0],test_output[0])            
             else:
                 # Fail case
                 verdicts(row[0],test_output[1])
-            driver.close()
+            print("PAGE TITLE: ", title)
+            print("======================================")
+            # driver.close()
+    end_test_time = timer()
+
     '''
         Logs and reports
     '''
     #   End time running
     end_time = timer()
     # Excuted time running
-    excuted_time = str(timedelta(seconds=(end_time - start_time)))
+    scrape_time = str(timedelta(seconds=(end_scrape_time - start_time)))
+    test_time = str(timedelta(seconds=(end_test_time - start_test_time)))
+    excuted_time = str(timedelta(seconds=(end_time - start_time)))    
     # Write runing time to report
     with open(VERDICT_FILE, 'a', encoding='utf-8') as f:
-        # print('%s was scraped from %d websites in:'%(CSV_FILE, number_of_urls), excuted_time, file=f)
-        print('TOTAL: Tests using %s browser on %d websites:'%(WEB_BROWSER,number_of_urls), excuted_time, file=f)
+        print('Test executing date: %s ' %(timestamp), file=f)
+        print('Browser: %s' %(WEB_BROWSER), file=f)
+        print('Browser option:', BROWSER_OPTION, file=f)
+        print('Number of websites: %d'%(number_of_urls), file=f)
+        print('Scraped time:', scrape_time, file=f)
+        print('Testing time:', test_time, file=f)
+        print('Total finish time:', excuted_time, file=f)
+        print('======================================================', file=f)
 
+ 

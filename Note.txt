@@ -37,7 +37,8 @@ by NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x0
 
 site with pop up choosen region, city, location (ameli.fr)
 
-## Test website
+## Strange websites:
+so.com
 pap.fr
 https://www.nytimes.com/  # button atribute only
 ameli.fr     # pop up 
@@ -47,6 +48,7 @@ tasty.co
 time.com
 mlb.com   ==> very strange behaviour
 https://www.directv.com/
+qq.com ==> search return open another seperate page => sogou.com, must include wwww
 
 #### Robot framwork advantage compared to selenium 
 -  requires less technical skill than programming language-based frameworks
